@@ -75,7 +75,8 @@ export default function SortingVisualizer() {
   useEffect(() => {
     generateRandomArray();
     audioContext.current = new (window.AudioContext ||
-      (window as unknown as any).webkitAudioContext)();
+      (window as unknown as { webkitAudioContext: AudioContext })
+        .webkitAudioContext)();
   }, [generateRandomArray]);
 
   const playSound = (frequency: number) => {
