@@ -1,13 +1,17 @@
 type SetArrayFunction = React.Dispatch<React.SetStateAction<number[]>>;
 type SetNumberFunction = React.Dispatch<React.SetStateAction<number>>;
+type GetSpeedFunction = () => number;
+type SleepFunction = () => Promise<void>;
+type PlaySoundFunction = (value: number) => void;
 
 export const bubbleSort = async (
   arr: number[],
   setArray: SetArrayFunction,
   setComparisons: SetNumberFunction,
   setSwaps: SetNumberFunction,
-  speed: number,
-  sleep: (ms: number) => Promise<void>
+  getSpeed: GetSpeedFunction,
+  sleep: SleepFunction,
+  playSound: PlaySoundFunction
 ) => {
   const n = arr.length;
   for (let i = 0; i < n - 1; i++) {
@@ -17,7 +21,8 @@ export const bubbleSort = async (
         setSwaps((prev) => prev + 1);
         [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
         setArray([...arr]);
-        await sleep(101 - speed);
+        playSound(arr[j]);
+        await sleep();
       }
     }
   }
@@ -28,8 +33,9 @@ export const quickSort = async (
   setArray: SetArrayFunction,
   setComparisons: SetNumberFunction,
   setSwaps: SetNumberFunction,
-  speed: number,
-  sleep: (ms: number) => Promise<void>
+  getSpeed: GetSpeedFunction,
+  sleep: SleepFunction,
+  playSound: PlaySoundFunction
 ) => {
   const partition = async (low: number, high: number) => {
     const pivot = arr[high];
@@ -42,14 +48,16 @@ export const quickSort = async (
         setSwaps((prev) => prev + 1);
         [arr[i], arr[j]] = [arr[j], arr[i]];
         setArray([...arr]);
-        await sleep(101 - speed);
+        playSound(arr[i]);
+        await sleep();
       }
     }
 
     setSwaps((prev) => prev + 1);
     [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
     setArray([...arr]);
-    await sleep(101 - speed);
+    playSound(arr[i + 1]);
+    await sleep();
 
     return i + 1;
   };
@@ -70,8 +78,9 @@ export const mergeSort = async (
   setArray: SetArrayFunction,
   setComparisons: SetNumberFunction,
   setSwaps: SetNumberFunction,
-  speed: number,
-  sleep: (ms: number) => Promise<void>
+  getSpeed: GetSpeedFunction,
+  sleep: SleepFunction,
+  playSound: PlaySoundFunction
 ) => {
   const merge = async (left: number, mid: number, right: number) => {
     const n1 = mid - left + 1;
@@ -96,7 +105,8 @@ export const mergeSort = async (
       setSwaps((prev) => prev + 1);
       k++;
       setArray([...arr]);
-      await sleep(101 - speed);
+      playSound(arr[k - 1]);
+      await sleep();
     }
 
     while (i < n1) {
@@ -105,7 +115,8 @@ export const mergeSort = async (
       k++;
       setSwaps((prev) => prev + 1);
       setArray([...arr]);
-      await sleep(101 - speed);
+      playSound(arr[k - 1]);
+      await sleep();
     }
 
     while (j < n2) {
@@ -114,7 +125,8 @@ export const mergeSort = async (
       k++;
       setSwaps((prev) => prev + 1);
       setArray([...arr]);
-      await sleep(101 - speed);
+      playSound(arr[k - 1]);
+      await sleep();
     }
   };
 
@@ -135,8 +147,9 @@ export const selectionSort = async (
   setArray: SetArrayFunction,
   setComparisons: SetNumberFunction,
   setSwaps: SetNumberFunction,
-  speed: number,
-  sleep: (ms: number) => Promise<void>
+  getSpeed: GetSpeedFunction,
+  sleep: SleepFunction,
+  playSound: PlaySoundFunction
 ) => {
   const n = arr.length;
   for (let i = 0; i < n - 1; i++) {
@@ -151,7 +164,8 @@ export const selectionSort = async (
       setSwaps((prev) => prev + 1);
       [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
       setArray([...arr]);
-      await sleep(101 - speed);
+      playSound(arr[i]);
+      await sleep();
     }
   }
 };
@@ -161,8 +175,9 @@ export const insertionSort = async (
   setArray: SetArrayFunction,
   setComparisons: SetNumberFunction,
   setSwaps: SetNumberFunction,
-  speed: number,
-  sleep: (ms: number) => Promise<void>
+  getSpeed: GetSpeedFunction,
+  sleep: SleepFunction,
+  playSound: PlaySoundFunction
 ) => {
   const n = arr.length;
   for (let i = 1; i < n; i++) {
@@ -175,10 +190,12 @@ export const insertionSort = async (
       arr[j + 1] = arr[j];
       j = j - 1;
       setArray([...arr]);
-      await sleep(101 - speed);
+      playSound(arr[j + 1]);
+      await sleep();
     }
     arr[j + 1] = key;
     setArray([...arr]);
-    await sleep(101 - speed);
+    playSound(arr[j + 1]);
+    await sleep();
   }
 };
