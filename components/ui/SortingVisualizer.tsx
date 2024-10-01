@@ -14,7 +14,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useTheme } from "next-themes";
 import { Pause, Play, RotateCcw } from "lucide-react";
 
-// Sorting algorithms
 import {
   bubbleSort,
   quickSort,
@@ -161,7 +160,7 @@ const EnhancedSortingVisualizer = () => {
 
   return (
     <div className="w-full max-w-4xl px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">
+      <h1 className="text-3xl font-bold mb-6 text-center sm:text-4xl">
         Sorting Algorithm Visualizer
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -209,7 +208,7 @@ const EnhancedSortingVisualizer = () => {
           Reset
         </Button>
       </div>
-      <div className="h-64 bg-gray-100 dark:bg-gray-800 relative rounded-lg overflow-hidden">
+      <div className="h-56 sm:h-64 bg-gray-100 dark:bg-gray-800 relative rounded-lg overflow-hidden">
         {array.map((value, index) => (
           <div
             key={index}
