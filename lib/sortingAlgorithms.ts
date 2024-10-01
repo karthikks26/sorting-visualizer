@@ -3,6 +3,7 @@ type SetNumberFunction = React.Dispatch<React.SetStateAction<number>>;
 type GetSpeedFunction = () => number;
 type SleepFunction = () => Promise<void>;
 type PlaySoundFunction = (value: number) => void;
+type CheckStopFunction = () => boolean;
 
 export const bubbleSort = async (
   arr: number[],
@@ -11,11 +12,13 @@ export const bubbleSort = async (
   setSwaps: SetNumberFunction,
   getSpeed: GetSpeedFunction,
   sleep: SleepFunction,
-  playSound: PlaySoundFunction
+  playSound: PlaySoundFunction,
+  checkStop: CheckStopFunction
 ) => {
   const n = arr.length;
   for (let i = 0; i < n - 1; i++) {
     for (let j = 0; j < n - i - 1; j++) {
+      if (checkStop()) return;
       setComparisons((prev) => prev + 1);
       if (arr[j] > arr[j + 1]) {
         setSwaps((prev) => prev + 1);
@@ -35,13 +38,15 @@ export const quickSort = async (
   setSwaps: SetNumberFunction,
   getSpeed: GetSpeedFunction,
   sleep: SleepFunction,
-  playSound: PlaySoundFunction
+  playSound: PlaySoundFunction,
+  checkStop: CheckStopFunction
 ) => {
   const partition = async (low: number, high: number) => {
     const pivot = arr[high];
     let i = low - 1;
 
     for (let j = low; j < high; j++) {
+      if (checkStop()) return -1;
       setComparisons((prev) => prev + 1);
       if (arr[j] < pivot) {
         i++;
@@ -65,6 +70,7 @@ export const quickSort = async (
   const sort = async (low: number, high: number) => {
     if (low < high) {
       const pi = await partition(low, high);
+      if (pi === -1) return; // Sorting stopped
       await sort(low, pi - 1);
       await sort(pi + 1, high);
     }
@@ -80,7 +86,8 @@ export const mergeSort = async (
   setSwaps: SetNumberFunction,
   getSpeed: GetSpeedFunction,
   sleep: SleepFunction,
-  playSound: PlaySoundFunction
+  playSound: PlaySoundFunction,
+  checkStop: CheckStopFunction
 ) => {
   const merge = async (left: number, mid: number, right: number) => {
     const n1 = mid - left + 1;
@@ -94,6 +101,7 @@ export const mergeSort = async (
       k = left;
 
     while (i < n1 && j < n2) {
+      if (checkStop()) return;
       setComparisons((prev) => prev + 1);
       if (L[i] <= R[j]) {
         arr[k] = L[i];
@@ -110,6 +118,7 @@ export const mergeSort = async (
     }
 
     while (i < n1) {
+      if (checkStop()) return;
       arr[k] = L[i];
       i++;
       k++;
@@ -120,6 +129,7 @@ export const mergeSort = async (
     }
 
     while (j < n2) {
+      if (checkStop()) return;
       arr[k] = R[j];
       j++;
       k++;
@@ -149,10 +159,12 @@ export const selectionSort = async (
   setSwaps: SetNumberFunction,
   getSpeed: GetSpeedFunction,
   sleep: SleepFunction,
-  playSound: PlaySoundFunction
+  playSound: PlaySoundFunction,
+  checkStop: CheckStopFunction
 ) => {
   const n = arr.length;
   for (let i = 0; i < n - 1; i++) {
+    if (checkStop()) return;
     let minIdx = i;
     for (let j = i + 1; j < n; j++) {
       setComparisons((prev) => prev + 1);
@@ -177,14 +189,17 @@ export const insertionSort = async (
   setSwaps: SetNumberFunction,
   getSpeed: GetSpeedFunction,
   sleep: SleepFunction,
-  playSound: PlaySoundFunction
+  playSound: PlaySoundFunction,
+  checkStop: CheckStopFunction
 ) => {
   const n = arr.length;
   for (let i = 1; i < n; i++) {
+    if (checkStop()) return;
     let key = arr[i];
     let j = i - 1;
 
     while (j >= 0 && arr[j] > key) {
+      if (checkStop()) return;
       setComparisons((prev) => prev + 1);
       setSwaps((prev) => prev + 1);
       arr[j + 1] = arr[j];

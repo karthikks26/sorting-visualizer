@@ -9,11 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
-import { useTheme } from "next-themes";
-import { Pause, Play, RotateCcw } from "lucide-react";
-
+import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import {
   bubbleSort,
   quickSort,
@@ -26,8 +25,9 @@ const ARRAY_SIZE = 50;
 const MIN_VALUE = 5;
 const MAX_VALUE = 100;
 
-const EnhancedSortingVisualizer = () => {
+export default function SortingVisualizer() {
   const [array, setArray] = useState<number[]>([]);
+  const [initialArray, setInitialArray] = useState<number[]>([]);
   const [sorting, setSorting] = useState(false);
   const [paused, setPaused] = useState(false);
   const [algorithm, setAlgorithm] = useState("bubbleSort");
@@ -35,19 +35,29 @@ const EnhancedSortingVisualizer = () => {
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
   const [isSorted, setIsSorted] = useState(false);
-  const { theme } = useTheme();
+  const [isInitialState, setIsInitialState] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
 
   const audioContext = useRef<AudioContext | null>(null);
   const speedRef = useRef(speed);
   const sortingRef = useRef(sorting);
   const pausedRef = useRef(paused);
   const stopSortingRef = useRef(false);
+  const isMutedRef = useRef(isMuted);
 
   useEffect(() => {
     speedRef.current = speed;
     sortingRef.current = sorting;
     pausedRef.current = paused;
-  }, [speed, sorting, paused]);
+    isMutedRef.current = isMuted;
+  }, [speed, sorting, paused, isMuted]);
+
+  useEffect(() => {
+    const storedMuteState = localStorage.getItem("sortingVisualizerMuted");
+    if (storedMuteState !== null) {
+      setIsMuted(storedMuteState === "true");
+    }
+  }, []);
 
   const generateRandomArray = useCallback(() => {
     const newArray = Array.from(
@@ -55,9 +65,11 @@ const EnhancedSortingVisualizer = () => {
       () => Math.floor(Math.random() * (MAX_VALUE - MIN_VALUE + 1)) + MIN_VALUE
     );
     setArray(newArray);
+    setInitialArray(newArray);
     setComparisons(0);
     setSwaps(0);
     setIsSorted(false);
+    setIsInitialState(true);
   }, []);
 
   useEffect(() => {
@@ -67,7 +79,7 @@ const EnhancedSortingVisualizer = () => {
   }, [generateRandomArray]);
 
   const playSound = (frequency: number) => {
-    if (audioContext.current) {
+    if (audioContext.current && !isMutedRef.current) {
       const oscillator = audioContext.current.createOscillator();
       const gainNode = audioContext.current.createGain();
       oscillator.connect(gainNode);
@@ -88,22 +100,43 @@ const EnhancedSortingVisualizer = () => {
   };
 
   const sleep = async (ms: number) => {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+      if (stopSortingRef.current) {
+        throw new Error("Sorting stopped");
+      }
+      setTimeout(resolve, ms);
+    });
   };
 
   const checkIfSorted = useCallback(() => {
     for (let i = 1; i < array.length; i++) {
       if (array[i] < array[i - 1]) {
-        setIsSorted(false);
-        return;
+        return false;
       }
     }
-    setIsSorted(true);
+    return true;
   }, [array]);
 
   useEffect(() => {
-    checkIfSorted();
-  }, [array, checkIfSorted]);
+    const sorted = checkIfSorted();
+    setIsSorted(sorted);
+    setIsInitialState(JSON.stringify(array) === JSON.stringify(initialArray));
+
+    if (sorted && !isInitialState) {
+      toast({
+        title: "Sorting Complete",
+        description: `${algorithm} finished with ${comparisons} comparisons and ${swaps} swaps.`,
+      });
+    }
+  }, [
+    array,
+    initialArray,
+    algorithm,
+    comparisons,
+    swaps,
+    checkIfSorted,
+    isInitialState,
+  ]);
 
   const runSortingAlgorithm = async () => {
     setSorting(true);
@@ -123,39 +156,52 @@ const EnhancedSortingVisualizer = () => {
     if (sortFunction) {
       try {
         await sortFunction(
-          array,
-          setArray,
+          [...array],
+          (newArray) => {
+            setArray(newArray);
+            setIsInitialState(false);
+          },
           setComparisons,
           setSwaps,
           () => speedRef.current,
           async () => {
             while (pausedRef.current) {
               await sleep(100);
-              if (stopSortingRef.current) return;
             }
-            if (stopSortingRef.current) return;
             await sleep(101 - speedRef.current);
           },
-          (value) => playSound(200 + value * 5)
+          (value) => playSound(200 + value * 5),
+          () => stopSortingRef.current
         );
-      } catch (error) {
-        console.error("Sorting error:", error);
+      } catch (error: any) {
+        if (error.message !== "Sorting stopped") {
+          console.error("Sorting error:", error);
+        }
       }
     }
 
     setSorting(false);
-    checkIfSorted();
   };
 
   const handleReset = () => {
     stopSortingRef.current = true;
     setSorting(false);
     setPaused(false);
-    generateRandomArray();
+    setArray([...initialArray]);
+    setComparisons(0);
+    setSwaps(0);
+    setIsSorted(false);
+    setIsInitialState(true);
   };
 
   const handlePauseResume = () => {
     setPaused(!paused);
+  };
+
+  const handleToggleMute = () => {
+    const newMuteState = !isMuted;
+    setIsMuted(newMuteState);
+    localStorage.setItem("sortingVisualizerMuted", newMuteState.toString());
   };
 
   return (
@@ -164,7 +210,11 @@ const EnhancedSortingVisualizer = () => {
         Sorting Algorithm Visualizer
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <Select onValueChange={setAlgorithm} value={algorithm}>
+        <Select
+          onValueChange={setAlgorithm}
+          value={algorithm}
+          disabled={sorting || isSorted}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select algorithm" />
           </SelectTrigger>
@@ -188,7 +238,7 @@ const EnhancedSortingVisualizer = () => {
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
         <Button onClick={generateRandomArray} disabled={sorting}>
           New Array
         </Button>
@@ -203,9 +253,21 @@ const EnhancedSortingVisualizer = () => {
           )}
           {paused ? "Resume" : "Pause"}
         </Button>
-        <Button onClick={handleReset} variant="outline">
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          disabled={isInitialState}
+        >
           <RotateCcw className="mr-2 h-4 w-4" />
           Reset
+        </Button>
+        <Button onClick={handleToggleMute} variant="outline">
+          {isMuted ? (
+            <VolumeX className="mr-2 h-4 w-4" />
+          ) : (
+            <Volume2 className="mr-2 h-4 w-4" />
+          )}
+          {isMuted ? "Unmute" : "Mute"}
         </Button>
       </div>
       <div className="h-56 sm:h-64 bg-gray-100 dark:bg-gray-800 relative rounded-lg overflow-hidden">
@@ -233,13 +295,6 @@ const EnhancedSortingVisualizer = () => {
           </CardContent>
         </Card>
       </div>
-      {isSorted && (
-        <div className="mt-4 text-center text-green-600 font-semibold">
-          Array is already sorted!
-        </div>
-      )}
     </div>
   );
-};
-
-export default EnhancedSortingVisualizer;
+}
